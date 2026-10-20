@@ -1,4 +1,6 @@
-# SignBridge AI
+<!-- Empowering Voice -->
+
+
 
 ISL → text → speech in the browser. Start with **BUILD_GUIDE.md**.
 To use a pretrained Hugging Face model instead of training, see "Path B" in the guide.
