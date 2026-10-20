@@ -1,0 +1,11 @@
+node_modules/
+dist/
+__pycache__/
+*.pyc
+.venv/
+.env
+*.db
+.DS_Store
+# raw recordings may contain faces: keep them out of git unless participants consented
+ml/data/raw/*
+!ml/data/raw/.gitkeep
