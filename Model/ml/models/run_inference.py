@@ -8,9 +8,9 @@ from mediapipe.tasks.python import vision
 from torchvision import transforms
 from PIL import Image
 
-SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))  # Model/ml/models
-ML_DIR = os.path.abspath(os.path.join(SCRIPT_DIR, ".."))   # Model/ml
-MODEL_ROOT = os.path.abspath(os.path.join(ML_DIR, ".."))    # Model/
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__)) # Model/ml/models
+ML_DIR = os.path.abspath(os.path.join(SCRIPT_DIR, ".."))# Model/ml
+MODEL_ROOT = os.path.abspath(os.path.join(ML_DIR, ".."))# Model/
 
 if MODEL_ROOT not in sys.path:
     sys.path.append(MODEL_ROOT)
@@ -73,8 +73,8 @@ while True:
         if hand_crop.size > 0:
             pil_image = Image.fromarray(cv2.cvtColor(hand_crop, cv2.COLOR_BGR2RGB))
             
-            # FIX 1: Split transformation and tensor unsqueezing to satisfy Pylance typing rules
-            img_tensor = preprocess(pil_image)
+            # FIX: Explicitly cast or type-annotate 'img_tensor' so Pylance knows it's a PyTorch Tensor
+            img_tensor: torch.Tensor = preprocess(pil_image)  # type: ignore
             tensor_batch = img_tensor.unsqueeze(0).to(device)
             
             with torch.no_grad():
@@ -82,7 +82,6 @@ while True:
                 probabilities = torch.softmax(outputs, dim=1)
                 top_prob, top_idx = torch.max(probabilities, dim=1)
                 
-                # Use int() wrapper to cleanly translate index numbers to match dict keys
                 class_index = int(top_idx.item())
                 predicted_class = idx_to_class[class_index]
                 confidence = top_prob.item() * 100
@@ -91,7 +90,7 @@ while True:
                 cv2.rectangle(frame, (x_min, y_min), (x_max, y_max), (46, 204, 113), 2)
                 cv2.putText(frame, f"{predicted_class} ({confidence:.1f}%)", 
                             (x_min, y_min-10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (46, 204, 113), 2)
-    
+
     cv2.imshow('Empowering Voice - Live ASL Preview', frame)
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break

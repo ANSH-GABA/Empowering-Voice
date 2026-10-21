@@ -21,14 +21,14 @@ you get exact steps and the key code.
 ## Repo map
 
 ```
-frontend/src/ml/...        hand tracking, features, classifier, stabilizer   (Phases 2, 5, 6)
+Model/ml/...               hand tracking, features, classifier, stabilizer   (Phases 2, 5, 6)
 frontend/src/pages/CollectPage.tsx    dataset collector                       (Phase 3)
 frontend/src/pages/TranslatePage.tsx  ISL → text → speech                     (Phases 5–7)
-ml/scripts/check_dataset.py           run after every recording session
-ml/scripts/train_static.py            compare KNN/SVM/RF/MLP, export for browser (Phases 4–5)
+Model/scripts/check_dataset.py        run after every recording session
+Model/scripts/train_static.py         compare KNN/SVM/RF/MLP, export for browser (Phases 4–5)
 backend/app/services/hf_classifier.py  pretrained Hugging Face model behind FastAPI (Path B)
 frontend/src/services/hfClassifier.ts  hand crop → /api/predict
-backend/scripts/evaluate_hf.py        score the HF model on your own photos
+backend/app/scripts/evaluate_hf.py    score the HF model on your own photos
 docs/experiments/                     tables + confusion matrix for your report
 ```
 ---
@@ -74,10 +74,10 @@ Open **Collect data**. Workflow per person:
    position in frame. This variety is what makes the model work on other people.
 4. Click **Download CSV** every few letters. The tab keeps data in memory only, and it warns
    you if you try to close it with unsaved samples.
-5. Move the CSVs into `ml/data/processed/static/`, then check them:
+5. Move the CSVs into `Model/ml/data/processed/static/`, then check them:
 
 ```bash
-python ml/scripts/check_dataset.py
+python Model/scripts/check_dataset.py
 ```
 
 **Before you record:**
@@ -92,7 +92,7 @@ python ml/scripts/check_dataset.py
 ## Phase 4: Static ML (1–2 weeks → realistically 2 days once data exists)
 
 ```bash
-python ml/scripts/train_static.py
+python Model/scripts/train_static.py
 ```
 
 It prints accuracy, precision, recall, F1 and latency for KNN, SVM, Random Forest and MLP,
@@ -122,7 +122,7 @@ it shows "Model loaded", and the current sign plus a confidence bar update live.
 
 ## Phase 6: Sentence builder (already built)
 
-`ml/prediction/smoother.ts` types a letter only after it wins **10 of 12 frames at ≥ 75% confidence**,
+`Model/ml/prediction/smoother.ts` types a letter only after it wins **10 of 12 frames at ≥ 75% confidence**,
 then waits for you to change sign or lower your hand (8 frames) before repeating a letter.
 Buttons: Space, Delete, Clear. Labels such as `SPACE`, `DELETE`, `CLEAR` or whole words in your
 model act on the sentence directly (`applyToken`).

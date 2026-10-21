@@ -3,16 +3,16 @@ import { Link } from "react-router-dom";
 import CameraView from "../components/camera/CameraView";
 import PredictionCard from "../components/recognition/PredictionCard";
 import SentencePanel from "../components/sentence/SentencePanel";
-import { extractFeatures } from "../ml/features/featureExtractor";
-import type { Point } from "../ml/features/normalize";
+import { extractFeatures } from "../../../Model/ml/features/featureExtractor";
+import type { Point } from "../../../Model/ml/features/normalize";
 import {
   loadStaticModel,
   predictStatic,
   StaticRemoteClassifier,
   type MlpModel,
   type Prediction,
-} from "../ml/models/staticClassifier";
-import { applyToken, PredictionStabilizer } from "../ml/prediction/smoother";
+} from "../../../Model/ml/models/staticClassifier";
+import { applyToken, PredictionStabilizer } from "../../../Model/ml/prediction/smoother";
 import { checkHfHealth, HfRemoteClassifier, type HfHealth } from "../services/hfClassifier";
 import { speak } from "../services/speechService";
 

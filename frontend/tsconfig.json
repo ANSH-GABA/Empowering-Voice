@@ -6,6 +6,9 @@
     "module": "ESNext",
     "skipLibCheck": true,
     "moduleResolution": "bundler",
+    "paths": {
+      "@mediapipe/tasks-vision": ["./node_modules/@mediapipe/tasks-vision"]
+    },
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,

@@ -4,7 +4,7 @@
 Shows how many samples each sign has per participant and warns about
 problems BEFORE you waste time training on bad data.
 
-    python ml/scripts/check_dataset.py
+    python Model/scripts/check_dataset.py
 """
 import argparse
 import glob
@@ -20,7 +20,7 @@ MIN_PER_CLASS = 300
 def main() -> None:
     root = Path(__file__).resolve().parents[1]
     ap = argparse.ArgumentParser()
-    ap.add_argument("--data", default=str(root / "data" / "processed" / "static"))
+    ap.add_argument("--data", default=str(root / "ml" / "data" / "processed" / "static"))
     args = ap.parse_args()
 
     files = sorted(glob.glob(str(Path(args.data) / "*.csv")))

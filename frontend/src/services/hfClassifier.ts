@@ -1,5 +1,5 @@
-import type { Point } from "../ml/features/normalize";
-import type { Prediction } from "../ml/models/staticClassifier";
+import type { Point } from "../../../Model/ml/features/normalize";
+import type { Prediction } from "../../../Model/ml/models/staticClassifier";
 
 const API = "/api"; // Vite proxies this to FastAPI on :8000 (see vite.config.ts)
 const INPUT_SIZE = 224; // standard ASL model input size
