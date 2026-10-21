@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Download, Play, Square, Trash2 } from "lucide-react";
 import CameraView from "../components/camera/CameraView";
-import { extractFeatures, FEATURE_DIM } from "../ml/features/featureExtractor";
-import type { Point } from "../ml/features/normalize";
+import { extractFeatures, FEATURE_DIM } from "../../../Model/ml/features/featureExtractor";
+import type { Point } from "../../../Model/ml/features/normalize";
 
 const ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
 const GOAL_PER_CLASS = 500; // README target: 500-1000 samples per class

@@ -1,4 +1,4 @@
-import type { Prediction } from "../../ml/models/staticClassifier";
+import type { Prediction } from "../../../../Model/ml/models/staticClassifier";
 
 export function ConfidenceBar({ value }: { value: number }) {
   const pct = Math.round(value * 100);

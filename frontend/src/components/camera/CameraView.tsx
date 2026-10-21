@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { DrawingUtils, HandLandmarker } from "@mediapipe/tasks-vision";
-import { getHandLandmarker } from "../../ml/mediapipe/handLandmarker";
-import type { Point } from "../../ml/features/normalize";
+import { getHandLandmarker } from "../../../../Model/ml/mediapipe/handLandmarker";
+import type { Point } from "../../../../Model/ml/features/normalize";
 
 type Status = "starting" | "loading-model" | "running" | "error";
 
