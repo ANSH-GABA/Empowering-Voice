@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """Phase 4 + 5: compare baselines, then export the MLP for the browser.
 
-    python ml/scripts/train_static.py
+    python Model/scripts/train_static.py
 
 What it does
-  1. Loads every CSV in ml/data/processed/static/
+  1. Loads every CSV in Model/data/processed/static/
   2. Splits BY PARTICIPANT (train / validation / test)
   3. Trains KNN, SVM, Random Forest and MLP and prints accuracy,
      precision, recall, F1 and single-sample latency
@@ -42,6 +42,7 @@ from sklearn.svm import SVC  # noqa: E402
 FEATURE_DIM = 129  # must match frontend/src/ml/features/featureExtractor.ts
 SEED = 42
 ROOT = Path(__file__).resolve().parents[2]
+MODEL_ROOT = Path(__file__).resolve().parents[1]
 
 
 def make_mlp():
@@ -150,7 +151,7 @@ def forward_check(payload, pipe, X):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--data", default=str(ROOT / "ml" / "data" / "processed" / "static"))
+    ap.add_argument("--data", default=str(MODEL_ROOT / "data" / "processed" / "static"))
     ap.add_argument("--out", default=str(ROOT / "frontend" / "public" / "models" / "static_mlp.json"))
     ap.add_argument("--report", default=str(ROOT / "docs" / "experiments"))
     ap.add_argument("--val", nargs="*", default=[], help="validation participant IDs, e.g. --val P05")

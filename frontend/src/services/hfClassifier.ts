@@ -8,6 +8,7 @@ export interface HfHealth {
   ok: boolean;
   model?: string;
   loaded?: boolean;
+  landmark_model_available?: boolean;
 }
 
 export async function checkHfHealth(): Promise<HfHealth> {

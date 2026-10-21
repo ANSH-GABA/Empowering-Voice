@@ -2,7 +2,7 @@ import { HAND_FEATURES, normalizeHand, type Point } from "./normalize";
 
 /**
  * 2 hands x 63 values + 3 values for the offset between the two wrists.
- * IMPORTANT: ml/scripts/train_static.py expects exactly this layout.
+ * IMPORTANT: Model/scripts/train_static.py expects exactly this layout.
  */
 export const FEATURE_DIM = HAND_FEATURES * 2 + 3; // 129
 

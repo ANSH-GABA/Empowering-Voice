@@ -8,6 +8,7 @@ import type { Point } from "../ml/features/normalize";
 import {
   loadStaticModel,
   predictStatic,
+  StaticRemoteClassifier,
   type MlpModel,
   type Prediction,
 } from "../ml/models/staticClassifier";
@@ -15,7 +16,7 @@ import { applyToken, PredictionStabilizer } from "../ml/prediction/smoother";
 import { checkHfHealth, HfRemoteClassifier, type HfHealth } from "../services/hfClassifier";
 import { speak } from "../services/speechService";
 
-type Engine = "landmark" | "hf";
+type Engine = "landmark" | "backend" | "hf";
 
 // The HF model answers ~5 times per second, so it needs a shorter voting window.
 const HF_STABILIZER = { windowSize: 5, minVotes: 4, minConfidence: 0.7, releaseFrames: 10 };
@@ -27,6 +28,7 @@ export default function TranslatePage() {
   const [modelMissing, setModelMissing] = useState(false);
   const [hfHealth, setHfHealth] = useState<HfHealth | null>(null);
   const [hfError, setHfError] = useState<string | null>(null);
+  const [backendError, setBackendError] = useState<string | null>(null);
   const [prediction, setPrediction] = useState<Prediction | null>(null);
   const [sentence, setSentence] = useState("");
 
@@ -35,8 +37,10 @@ export default function TranslatePage() {
   const modelRef = useRef<MlpModel | null>(null);
   const handsVisible = useRef(false);
   const landmarkStab = useRef(new PredictionStabilizer());
+  const backendStab = useRef(new PredictionStabilizer(HF_STABILIZER));
   const hfStab = useRef(new PredictionStabilizer(HF_STABILIZER));
   const hf = useRef(new HfRemoteClassifier());
+  const backendClassifier = useRef(new StaticRemoteClassifier());
   engineRef.current = engine;
   flipRef.current = flip;
 
@@ -51,9 +55,11 @@ export default function TranslatePage() {
 
   useEffect(() => {
     landmarkStab.current.reset();
+    backendStab.current.reset();
     hfStab.current.reset();
+    setBackendError(null);
     setPrediction(null);
-    if (engine === "hf") checkHfHealth().then(setHfHealth);
+    if (engine !== "landmark") checkHfHealth().then(setHfHealth);
   }, [engine]);
 
   const commit = (label: string | null) => {
@@ -81,14 +87,33 @@ export default function TranslatePage() {
       return;
     }
 
-    const m = modelRef.current;
-    if (!m) return;
     const features = extractFeatures(hands, aspect);
     if (!features) {
       setPrediction(null);
       landmarkStab.current.push(null, 0);
+      backendStab.current.push(null, 0);
       return;
     }
+
+    if (engineRef.current === "backend") {
+      backendClassifier.current
+        .classify(features)
+        .then((p) => {
+          if (!p || !handsVisible.current || engineRef.current !== "backend") return;
+          setBackendError(null);
+          setPrediction(p);
+          commit(backendStab.current.push(p.label, p.confidence));
+        })
+        .catch((error: unknown) => {
+          setBackendError(
+            error instanceof Error ? error.message : "Backend landmark prediction failed.",
+          );
+        });
+      return;
+    }
+
+    const m = modelRef.current;
+    if (!m) return;
     const p = predictStatic(m, features);
     setPrediction(p);
     commit(landmarkStab.current.push(p.label, p.confidence));
@@ -112,6 +137,13 @@ export default function TranslatePage() {
             onClick={() => setEngine("landmark")}
           >
             My trained model
+          </button>
+          <button
+            className={tab(engine === "backend")}
+            aria-pressed={engine === "backend"}
+            onClick={() => setEngine("backend")}
+          >
+            Backend trained model
           </button>
         </div>
 
@@ -141,13 +173,30 @@ export default function TranslatePage() {
           </div>
         )}
 
+        {engine === "backend" && (
+          <div className="space-y-2 rounded-lg bg-white p-4 text-lg" role="status">
+            {hfHealth?.ok && hfHealth.landmark_model_available ? (
+              <p>Backend connected · trained landmark model available</p>
+            ) : (
+              <p className="font-bold text-alert">
+                Backend model unavailable. Start the backend and run{" "}
+                <code>python Model/scripts/train_static.py</code> to train/export it.
+              </p>
+            )}
+            {backendError && <p className="font-bold text-alert">{backendError}</p>}
+            <p className="text-muted">
+              Hand landmarks are extracted in the browser and sent to the backend model for prediction.
+            </p>
+          </div>
+        )}
+
         {engine === "landmark" && modelMissing && (
           <div className="rounded-lg border-2 border-amber bg-white p-4 text-lg" role="status">
             No trained model yet. Record signs on the{" "}
             <Link to="/collect" className="font-bold underline">
               Collect data
             </Link>{" "}
-            page, then run <code className="font-bold">python ml/scripts/train_static.py</code>.
+            page, then run <code className="font-bold">python Model/scripts/train_static.py</code>.
           </div>
         )}
         {engine === "landmark" && model && (
