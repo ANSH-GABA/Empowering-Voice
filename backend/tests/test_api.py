@@ -7,7 +7,7 @@ from fastapi.testclient import TestClient  # noqa: E402
 from PIL import Image  # noqa: E402
 
 from app.main import app  # noqa: E402
-from app.services import hf_classifier, static_classifier  # noqa: E402
+from app.services import asl_classifier, hf_classifier, static_classifier  # noqa: E402
 
 
 def jpeg_bytes() -> bytes:
@@ -24,6 +24,8 @@ def test_health():
 
 
 def test_predict_returns_top_predictions(monkeypatch):
+    monkeypatch.setattr(asl_classifier, "is_available", lambda: True)
+    monkeypatch.setattr(asl_classifier, "classify", lambda data, top_k=3: [{"label": "A", "score": 0.9}, {"label": "B", "score": 0.1}][:top_k])
     monkeypatch.setattr(hf_classifier, "get_pipeline", lambda: lambda img, top_k: [{"label": "A", "score": 0.9}, {"label": "B", "score": 0.1}][:top_k])
     with TestClient(app) as client:
         r = client.post("/api/predict", files={"image": ("f.jpg", jpeg_bytes(), "image/jpeg")})

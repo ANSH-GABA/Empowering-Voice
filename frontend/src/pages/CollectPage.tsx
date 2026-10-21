@@ -41,7 +41,7 @@ export default function CollectPage() {
   const [participant, setParticipant] = useState("P01");
   const [classes, setClasses] = useState<string[]>(ALPHABET);
   const [label, setLabel] = useState("A");
-  const [takeSize, setTakeSize] = useState(200);
+  const [takeSize, setTakeSize] = useState(50);
   const [autoAdvance, setAutoAdvance] = useState(true);
   const [newClass, setNewClass] = useState("");
 
@@ -51,6 +51,9 @@ export default function CollectPage() {
   const [counts, setCounts] = useState<Record<string, number>>({});
   const [total, setTotal] = useState(0);
   const [savedUpTo, setSavedUpTo] = useState(0);
+  const [saveStatus, setSaveStatus] = useState<string | null>(null);
+  const [isTraining, setIsTraining] = useState(false);
+  const [trainStatus, setTrainStatus] = useState<string | null>(null);
 
   const samples = useRef<Sample[]>([]);
   const rec = useRef<Recording>({ ...IDLE });
@@ -138,13 +141,55 @@ export default function CollectPage() {
     return () => window.removeEventListener("beforeunload", warn);
   }, [unsaved]);
 
-  const downloadCsv = () => {
-    if (samples.current.length === 0) return;
+  const getCsvString = () => {
     const header = ["participant_id", "label", ...Array.from({ length: FEATURE_DIM }, (_, i) => `f${i}`)];
     const rows = samples.current.map((s) =>
       [s.participant, s.label, ...s.features.map((v) => v.toFixed(5))].join(","),
     );
-    const blob = new Blob([[header.join(","), ...rows].join("\n")], { type: "text/csv" });
+    return [header.join(","), ...rows].join("\n");
+  };
+
+  const saveToBackend = async () => {
+    if (samples.current.length === 0) return;
+    try {
+      setSaveStatus("Saving directly to project training folder…");
+      const res = await fetch("/api/dataset/save", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          participant: participant.trim() || "P01",
+          csv_content: getCsvString(),
+        }),
+      });
+      if (!res.ok) throw new Error("Could not save dataset to backend.");
+      const data = (await res.json()) as { ok: boolean; file: string };
+      setSaveStatus(`Saved as ${data.file}! You can now train.`);
+      setSavedUpTo(samples.current.length);
+    } catch (e) {
+      setSaveStatus(e instanceof Error ? e.message : "Error saving dataset");
+    }
+  };
+
+  const trainModel = async () => {
+    try {
+      setIsTraining(true);
+      setTrainStatus("Training MLP model on your landmarks… (about 5-10s)");
+      const res = await fetch("/api/train/run", { method: "POST" });
+      if (!res.ok) {
+        const err = (await res.json()) as { detail?: string };
+        throw new Error(err.detail || "Training failed");
+      }
+      setTrainStatus("Training complete! Model exported to browser. Switch to Translate tab to use it!");
+    } catch (e) {
+      setTrainStatus(e instanceof Error ? e.message : "Error running training");
+    } finally {
+      setIsTraining(false);
+    }
+  };
+
+  const downloadCsv = () => {
+    if (samples.current.length === 0) return;
+    const blob = new Blob([getCsvString()], { type: "text/csv" });
     const stamp = new Date().toISOString().slice(0, 16).replace(/[-:T]/g, "");
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
@@ -266,6 +311,23 @@ export default function CollectPage() {
 
         <div className="grid grid-cols-2 gap-3">
           <button
+            onClick={saveToBackend}
+            disabled={total === 0}
+            className="flex items-center justify-center gap-2 rounded-lg bg-ink px-4 py-3 text-lg font-bold text-white hover:bg-ink/80 disabled:opacity-40"
+          >
+            💾 Save to Project
+          </button>
+          <button
+            onClick={trainModel}
+            disabled={isTraining || total === 0}
+            className="flex items-center justify-center gap-2 rounded-lg bg-signal px-4 py-3 text-lg font-bold text-white hover:bg-signal-dark disabled:opacity-40"
+          >
+            ⚡ {isTraining ? "Training…" : "Train Model Now"}
+          </button>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          <button
             onClick={downloadCsv}
             disabled={total === 0}
             className="flex items-center justify-center gap-2 rounded-lg border-2 border-ink px-4 py-3 text-lg font-bold disabled:opacity-40"
@@ -280,8 +342,20 @@ export default function CollectPage() {
             <Trash2 aria-hidden /> Clear “{label}”
           </button>
         </div>
+
+        {saveStatus && (
+          <p className="rounded-md bg-signal/10 p-2 text-sm font-semibold text-signal">
+            {saveStatus}
+          </p>
+        )}
+        {trainStatus && (
+          <p className="rounded-md bg-amber/10 p-2 text-sm font-semibold text-ink">
+            {trainStatus}
+          </p>
+        )}
+
         <p className={unsaved > 0 ? "text-lg font-bold text-alert" : "text-lg text-muted"}>
-          {total} samples in this session{unsaved > 0 ? ` · ${unsaved} not downloaded yet` : ""}
+          {total} samples in this session{unsaved > 0 ? ` · ${unsaved} unsaved` : ""}
         </p>
       </div>
     </div>
